@@ -1,7 +1,7 @@
 django-reroute
 ==============
 
-django-reroute is a drop-in replacement for django.conf.urls.defaults which supports HTTP verb dispatch and view wrapping.
+django-reroute is a drop-in replacement for django.conf.urls.defaults that supports HTTP verb dispatch and view wrapping.
 
 Download
 --------
