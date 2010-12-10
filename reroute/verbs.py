@@ -8,9 +8,31 @@ from utils import rollup
 __all__ = ['verb_url', 'request_method']
 
 def request_method(request):
-    # For security reasons POST is the only method that supports HTTP method overriding.
+    '''Returns the effective HTTP method of a request. To support the entire range of HTTP methods
+    from HTML forms (which only support GET and POST), an HTTP method may be emulated by
+    setting a POST parameter named "_method" to the name of the HTTP method to be emulated.
+    
+    Example HTML:
+        <!-- Submits a form using the PUT method -->
+        
+        <form>
+            <input type="text" name="name" value="value" />
+            <button type="submit" name="_method" value="put">Update</button>
+        </form>
+    
+    Args:
+        request: an HttpRequest
+    
+    Returns:
+        An upper-case string naming the HTTP method (like django.http.HttpRequest.method)
+    '''
+    
+    # For security reasons POST is the only method that supports HTTP method emulation.
     # For example, if POST requires csrf_token, we don't want POST methods to be called via
-    # GET (thereby bypassing CSRF protection).
+    # GET (thereby bypassing CSRF protection). POST has the most limited semantics, and it
+    # is therefore safe to emulate HTTP methods with less-limited semantics. See
+    # http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html ("Safe and Idempotent Methods")
+    # for details.
 
     if request.method == 'POST' and '_method' in request.POST:
         method = request.POST['_method'].upper()
