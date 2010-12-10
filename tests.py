@@ -1,0 +1,184 @@
+from functools import partial
+import os
+import unittest
+
+from django.conf.urls.defaults import patterns as django_patterns
+from django.core.exceptions import ImproperlyConfigured
+from django.core.urlresolvers import resolve, reverse
+from django.http import HttpRequest, HttpResponse
+
+import reroute
+from reroute import patterns, url, include, reroute_patterns
+from reroute.verbs import verb_url
+
+class URLConf():
+    def __init__(self, urlpatterns):
+        self.urlpatterns = urlpatterns
+    
+def request_with_method(method, path, urlconf):
+    callback, callback_args, callback_kwargs = resolve(path, urlconf)
+    request = HttpRequest()
+    request.method = method
+    response = callback(request, *callback_args, **callback_kwargs)
+    return response
+    
+def content_with_method(method, path, urlconf):
+    response = request_with_method(method, path, urlconf)
+    return response.content
+    
+content = partial(content_with_method, 'GET')
+    
+# Test views
+
+def view_one(request):
+    return HttpResponse('ONE')
+
+def view_two(request):
+    return HttpResponse('TWO')
+    
+def view_three(request):
+    return HttpResponse('THREE')
+    
+def kwarg_view(request, key):
+    return HttpResponse(key)
+    
+def generic_view(request):
+    return HttpResponse('OK')
+        
+def method_view(request):
+    return HttpResponse(request.method)
+    
+def wrapper_view(request):
+    return HttpResponse('wrapper ' + request.WRAPPER_TEST)
+    
+class HandlerExistenceTestCase(unittest.TestCase):
+    def test(self):
+        self.assertTrue(hasattr(reroute, 'handler404'))
+        self.assertTrue(hasattr(reroute, 'handler500'))
+        
+class DjangoCompatibilityTestCase(unittest.TestCase):
+    def setUp(self):
+        included_urlpatterns = patterns('tests',
+            url('^included_view$', 'generic_view')
+        )
+        
+        urlpatterns = patterns('tests',
+            ('^tuple$', 'generic_view'),
+            url('^url$', 'generic_view'),
+            url('^non_string_view$', generic_view),
+            url('^view_with_name$', 'generic_view', name='view_with_name'),
+            url('^kwargs$', 'kwarg_view', kwargs={'key': 'value'}),
+            url('^url_reverse$', 'view_one'),
+            url('^non_string_view_reverse$', view_two),
+            url('^view_with_name_reverse$', 'view_three', name='view_with_name_reverse'),
+            url('^include/', include(included_urlpatterns))
+        )
+        
+        urlpatterns += patterns('',
+            url('^prefix' , 'generic_view', prefix='tests'),
+        )
+        
+        self.urlconf = URLConf(urlpatterns)
+    
+    def testTuple(self):
+        self.assertEqual(content('/tuple', self.urlconf), 'OK')
+        
+    def testURL(self):
+        self.assertEqual(content('/url', self.urlconf), 'OK')
+        
+    def testNonStringView(self):
+        self.assertEqual(content('/non_string_view', self.urlconf), 'OK')
+        
+    def testViewWithName(self):
+        self.assertEqual(content('/view_with_name', self.urlconf), 'OK')
+        
+    def testKwargs(self):
+        self.assertEqual(content('/kwargs', self.urlconf), 'value')
+        
+    def testPrefix(self):
+        self.assertEqual(content('/prefix', self.urlconf), 'OK')
+        
+    def testUrlReverse(self):
+        self.assertEqual(reverse('tests.view_one', self.urlconf), '/url_reverse')
+    
+    def testNonStringViewReverse(self):
+        self.assertEqual(reverse('tests.view_two', self.urlconf), '/non_string_view_reverse')
+        
+    def testNonStringViewReverse(self):
+        self.assertEqual(reverse('view_with_name_reverse', self.urlconf), '/view_with_name_reverse')
+        
+    def testIncludedView(self):
+        self.assertEqual(content('/include/included_view', self.urlconf), 'OK')
+
+# Wrappers
+
+def wrapper1(view, request, *args, **kwargs):
+    request.WRAPPER_TEST = '1'
+    return view(request, *args, **kwargs)
+    
+def wrapper2(view, request, *args, **kwargs):
+    request.WRAPPER_TEST += ' 2'
+    return view(request, *args, **kwargs)
+
+class ReroutePatternsTestCase(unittest.TestCase):
+    def testReroutePatterns(self): 
+        urlconf = URLConf(reroute_patterns([wrapper1], 'tests',
+            url('^test$', 'wrapper_view')
+        ))
+           
+        self.assertEqual(content('/test', urlconf), 'wrapper 1')
+        
+    def testWrapperOrder(self):       
+        urlconf = URLConf(reroute_patterns([wrapper1, wrapper2], 'tests',
+            url('^test$', 'wrapper_view')
+        ))
+        
+        self.assertEqual(content('/test', urlconf), 'wrapper 1 2')
+        
+    def testURLWithDjangoPatternsShouldFail(self):
+        urlconf = URLConf(django_patterns('tests',
+            url('^test$', 'wrapper_view')
+        ))
+        
+        self.assertRaises(ImproperlyConfigured, content, '/test', urlconf)
+        
+class VerbURLTestCase(unittest.TestCase):
+    def setUp(self):
+        included_urlpatterns = patterns('tests',
+            verb_url('GET',     '^test$', 'method_view'),
+            verb_url('POST',    '^test$', 'method_view')
+        )
+        
+        self.urlconf = URLConf(patterns('tests',
+            verb_url('GET',     '^test$', 'method_view'),
+            verb_url('POST',    '^test$', 'method_view'),
+            verb_url('PUT',     '^test$', 'method_view'),
+            verb_url('DELETE',  '^test$', 'method_view'),
+            url('^include/', include(included_urlpatterns))
+        ))
+                
+    def testGet(self):
+        self.assertEqual(content_with_method('GET', '/test', self.urlconf), 'GET')
+        
+    def testPost(self):
+        self.assertEqual(content_with_method('POST', '/test', self.urlconf), 'POST')
+        
+    def testPut(self):
+        self.assertEqual(content_with_method('PUT', '/test', self.urlconf), 'PUT')
+        
+    def testDelete(self):
+        self.assertEqual(content_with_method('DELETE', '/test', self.urlconf), 'DELETE')
+        
+    def testIncludeGet(self):
+        self.assertEqual(content_with_method('GET', '/include/test', self.urlconf), 'GET')
+        
+    def testIncludePost(self):
+        self.assertEqual(content_with_method('POST', '/include/test', self.urlconf), 'POST')
+        
+    def testMethodNotAllowed(self):
+        response = request_with_method('PUT', '/include/test', self.urlconf)
+        self.assertEqual(response.status_code, 405)
+
+if __name__ == '__main__':
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+    unittest.main()
