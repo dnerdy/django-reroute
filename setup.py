@@ -12,7 +12,7 @@ setup(
     long_description=open('README.rst').read(),
     author='Mark Sandstrom',
     author_email='mark@deliciouslynerdy.com',
-    url='http://github.com/dnerdy/reroute',
+    url='http://github.com/dnerdy/django-reroute',
     keywords=['reroute', 'django', 'http', 'rest', 'route', 'routing', 'dispatch', 'wrapper'],
     packages=['reroute'],
     license='MIT',
