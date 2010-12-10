@@ -38,6 +38,14 @@ class VerbRegexURLPattern(RerouteRegexURLPattern):
     def reroute_config(self, wrappers, patterns_id):
         super(VerbRegexURLPattern, self).reroute_config(wrappers, patterns_id)
         
+        # Let patterns with identical regexes that are defined within the same call
+        # to reroute_patterns be called a pattern group. Each pattern in a pattern group
+        # has a reference to shared dict (shared by the group) which maps http methods
+        # to pattern callbacks. Only one pattern from a group will ever be resolved (remember
+        # that the patterns all have identical regexes), so this shared dict is used to route
+        # to the correct callback for a given http method. All this hoopla is necessary since
+        # patterns are resolved outside the context of a request.
+        
         method_callbacks_by_regex = self.patterns_index.setdefault(patterns_id, {})
         method_callbacks = method_callbacks_by_regex.setdefault(self.regex, {})
         
