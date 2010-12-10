@@ -9,6 +9,7 @@ setup(
     name='django-reroute',
     version=VERSION,
     description="A drop-in replacement for django.conf.urls.defaults which supports HTTP verb dispatch and view wrapping.",
+    long_description=open('README.rst').read(),
     author='Mark Sandstrom',
     author_email='mark@deliciouslynerdy.com',
     url='http://github.com/dnerdy/reroute',
