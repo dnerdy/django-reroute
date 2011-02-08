@@ -28,7 +28,11 @@ from django.conf.urls.defaults import patterns as django_patterns
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import resolve, reverse
 from django.http import HttpRequest, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
+
+try:
+    from django.views.decorators.csrf import csrf_exempt  # django >= 1.2
+except ImportError:
+    from django.contrib.csrf.middleware import csrf_exempt  # django < 1.2
 
 import reroute
 from reroute import patterns, url, include, reroute_patterns
@@ -99,7 +103,7 @@ class DjangoCompatibilityTestCase(unittest.TestCase):
             url('^non_string_view_reverse$', view_two),
             url('^view_with_name_reverse$', 'view_three', name='view_with_name_reverse'),
             url('^include/', include(included_urlpatterns)),
-            url('^csrf_exempt_view$', csrf_exempt_view)
+            url('^csrf_exempt_view$', csrf_exempt_view),
         )
         
         urlpatterns += patterns('',
@@ -142,7 +146,7 @@ class DjangoCompatibilityTestCase(unittest.TestCase):
         callback, callback_args, callback_kwargs = resolve('/csrf_exempt_view', self.urlconf)
         self.assertTrue(hasattr(callback, 'csrf_exempt'))
         self.assertTrue(callback.csrf_exempt, True)
-
+        
 # Wrappers
 
 def wrapper1(view, request, *args, **kwargs):
@@ -187,6 +191,8 @@ class VerbURLTestCase(unittest.TestCase):
             verb_url('POST',    '^test$', 'method_view'),
             verb_url('PUT',     '^test$', 'method_view'),
             verb_url('DELETE',  '^test$', 'method_view'),
+            verb_url('GET',     '^kwarg', 'kwarg_view', {'key': 'get view'}),
+            verb_url('POST',    '^kwarg', 'kwarg_view', {'key': 'post view'}),
             url('^include/', include(included_urlpatterns))
         ))
                 
@@ -201,6 +207,10 @@ class VerbURLTestCase(unittest.TestCase):
         
     def testDelete(self):
         self.assertEqual(content_with_method('DELETE', '/test', self.urlconf), 'DELETE')
+        
+    def testKwargs(self):
+        self.assertEqual(content_with_method('GET', '/kwarg', self.urlconf), 'get view')
+        self.assertEqual(content_with_method('POST', '/kwarg', self.urlconf), 'post view')
         
     def testIncludeGet(self):
         self.assertEqual(content_with_method('GET', '/include/test', self.urlconf), 'GET')

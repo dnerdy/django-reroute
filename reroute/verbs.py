@@ -69,11 +69,14 @@ class VerbRegexURLPattern(RerouteRegexURLPattern):
         self.method = method.upper() 
     
     def reroute_callback(self, request, *args, **kwargs):
-        callback = self.method_callbacks.get(request_method(request))
+        record = self.method_callbacks.get(request_method(request))
         
-        if not callback:
+        if not record:
             return HttpResponse(status=405)
             
+        callback = record['callback']
+        kwargs.update(record['default_args'])
+           
         callback = rollup(callback, self.wrappers)
         return callback(request, *args, **kwargs)
     
@@ -92,7 +95,8 @@ class VerbRegexURLPattern(RerouteRegexURLPattern):
         method_callbacks = method_callbacks_by_regex.setdefault(self.regex, {})
         
         if self.method not in method_callbacks:
-            method_callbacks[self.method] = self.callback
+            method_callbacks[self.method] = {'callback': self.callback, 'default_args': self.default_args}
+            self.default_args = {}
         
         # Borg-like
         self.method_callbacks = method_callbacks       
