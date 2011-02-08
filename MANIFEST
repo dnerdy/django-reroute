@@ -1,8 +1,0 @@
-setup.py
-README.rst
-tests.py
-LICENSE
-reroute/__init__.py
-reroute/base.py
-reroute/utils.py
-reroute/verbs.py
