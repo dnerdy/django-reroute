@@ -18,14 +18,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from functools import partial
 import os
+os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+
+from functools import partial
 import unittest
 
 from django.conf.urls.defaults import patterns as django_patterns
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import resolve, reverse
 from django.http import HttpRequest, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 
 import reroute
 from reroute import patterns, url, include, reroute_patterns
@@ -70,6 +73,10 @@ def method_view(request):
     
 def wrapper_view(request):
     return HttpResponse('wrapper ' + request.WRAPPER_TEST)
+
+@csrf_exempt
+def csrf_exempt_view(request):
+    return HttpResponse('OK')
     
 class HandlerExistenceTestCase(unittest.TestCase):
     def test(self):
@@ -91,7 +98,8 @@ class DjangoCompatibilityTestCase(unittest.TestCase):
             url('^url_reverse$', 'view_one'),
             url('^non_string_view_reverse$', view_two),
             url('^view_with_name_reverse$', 'view_three', name='view_with_name_reverse'),
-            url('^include/', include(included_urlpatterns))
+            url('^include/', include(included_urlpatterns)),
+            url('^csrf_exempt_view$', csrf_exempt_view)
         )
         
         urlpatterns += patterns('',
@@ -129,6 +137,11 @@ class DjangoCompatibilityTestCase(unittest.TestCase):
         
     def testIncludedView(self):
         self.assertEqual(content('/include/included_view', self.urlconf), 'OK')
+
+    def testCsrfExemptView(self):
+        callback, callback_args, callback_kwargs = resolve('/csrf_exempt_view', self.urlconf)
+        self.assertTrue(hasattr(callback, 'csrf_exempt'))
+        self.assertTrue(callback.csrf_exempt, True)
 
 # Wrappers
 
@@ -200,5 +213,4 @@ class VerbURLTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 405)
 
 if __name__ == '__main__':
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
     unittest.main()

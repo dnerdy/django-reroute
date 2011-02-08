@@ -54,8 +54,15 @@ class RerouteRegexURLPattern(RegexURLPattern):
                 args = match.groups()
             # In both cases, pass any extra_kwargs as **kwargs.
             kwargs.update(self.default_args)
-        
-            return self.reroute_callback, args, kwargs
+
+            # We unfortunately need another wrapper here since arbitrary attributes can't be set
+            # on an instancemethod
+            callback = lambda request, *args, **kwargs: self.reroute_callback(request, *args, **kwargs)
+            
+            if hasattr(self.callback, 'csrf_exempt'):
+                callback.csrf_exempt = self.callback.csrf_exempt
+
+            return callback, args, kwargs
 
 def reroute_patterns(wrappers, prefix, *args):
     # TODO(dnerdy) Require that all patterns be instances of RerouteRegexURLPattern
