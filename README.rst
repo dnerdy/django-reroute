@@ -3,6 +3,12 @@ django-reroute
 
 django-reroute is a drop-in replacement for django.conf.urls.defaults that supports HTTP verb dispatch and view wrapping.
 
+Changes in version 1.0.0
+------------------------
+
+- [**NEW**] Added support for the csrf_exempt decorator
+- [**FIXED**] The incorrect default kwargs are used for verb_url patterns that have the same regex
+
 Download
 --------
 
