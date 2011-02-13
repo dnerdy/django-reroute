@@ -1,4 +1,5 @@
 *.pyc
+*.swp
 build/
 dist/
 django_reroute.egg-info/
