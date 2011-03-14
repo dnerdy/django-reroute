@@ -92,7 +92,7 @@ class VerbRegexURLPattern(RerouteRegexURLPattern):
         # patterns are resolved outside the context of a request.
         
         method_callbacks_by_regex = self.patterns_index.setdefault(patterns_id, {})
-        method_callbacks = method_callbacks_by_regex.setdefault(self.regex, {})
+        method_callbacks = method_callbacks_by_regex.setdefault(self.regex.pattern, {})
         
         if self.method not in method_callbacks:
             method_callbacks[self.method] = {'callback': self.callback, 'default_args': self.default_args}
