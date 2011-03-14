@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 # Remember to change in reroute/__init__.py as well!
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 
 setup(
     name='django-reroute',
