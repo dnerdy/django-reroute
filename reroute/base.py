@@ -24,6 +24,12 @@ from django.conf.urls.defaults import patterns as django_patterns
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import RegexURLPattern, RegexURLResolver
 
+# Django 1.3 compatibility
+try:
+    from django.core.urlresolvers import ResolverMatch
+except ImportError:
+    ResolverMatch = None
+
 from utils import rollup
 
 class RerouteRegexURLPattern(RegexURLPattern):
@@ -62,7 +68,11 @@ class RerouteRegexURLPattern(RegexURLPattern):
             if hasattr(self.callback, 'csrf_exempt'):
                 callback.csrf_exempt = self.callback.csrf_exempt
 
-            return callback, args, kwargs
+            # Django 1.3 compatibility
+            if ResolverMatch:
+                return ResolverMatch(callback, args, kwargs, self.name)
+            else:
+                return callback, args, kwargs
 
 def reroute_patterns(wrappers, prefix, *args):
     # TODO(dnerdy) Require that all patterns be instances of RerouteRegexURLPattern
