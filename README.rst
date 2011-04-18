@@ -3,6 +3,11 @@ django-reroute
 
 django-reroute is a set of tools for simplifying your views, especially when you're implementing a REST API. django-reroute provides a drop-in replacement for django.conf.urls.defaults that supports HTTP verb dispatch so that your views don't become cluttered with ``if request.method == 'GET'`` statements. It also provides a nifty set of view decorators for simplifying common tasks like rendering a template using a RequestContext and redirecting to a particular view after request processing.
 
+News
+----
+
+Django 1.3 is now supported as of v1.1.1
+
 Download
 --------
 
@@ -153,6 +158,11 @@ You can even get fancy and create your own drop-in replacement for patterns::
         verb_url('GET', '^restful$', 'restful_view'),
         verb_url('PUT', '^restful$', 'another_restful_view')
     )
+
+Changes in version 1.1.1
+------------------------
+
+- [**NEW**] Added support for Django 1.3
 
 Changes in version 1.1.0
 ------------------------
