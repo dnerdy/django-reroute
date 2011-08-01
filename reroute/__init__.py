@@ -22,6 +22,7 @@ __version__ = '1.1.1'  # Remember to change in setup.py as well!
 __author__ = 'Mark Sandstrom <mark@deliciouslynerdy.com>'
 
 from django.conf.urls.defaults import handler404, handler500, include
-from base import patterns, reroute_patterns, url
+from base import patterns, reroute_patterns, reroute_patterns_group, url
 
-__all__ = ['handler404', 'handler500', 'include', 'patterns', 'url', 'reroute_patterns']
+__all__ = ['handler404', 'handler500', 'include', 'patterns', 'url', 'reroute_patterns',
+           'reroute_patterns_group']

@@ -35,7 +35,7 @@ except ImportError:
     from django.contrib.csrf.middleware import csrf_exempt  # django < 1.2
 
 import reroute
-from reroute import patterns, url, include, reroute_patterns
+from reroute import patterns, url, include, reroute_patterns, reroute_patterns_group
 from reroute.verbs import verb_url
 
 class URLConf():
@@ -221,6 +221,30 @@ class VerbURLTestCase(unittest.TestCase):
     def testMethodNotAllowed(self):
         response = request_with_method('PUT', '/include/test', self.urlconf)
         self.assertEqual(response.status_code, 405)
+
+class VerbURLGroupingTestCase(unittest.TestCase):
+    def setUp(self):
+        patterns = partial(reroute_patterns_group, 'group', [])
+
+        patterns_one = patterns('tests',
+            verb_url('GET', '^test$', 'method_view'),
+        )
+        patterns_two = patterns('tests',
+            verb_url('POST', '^test$', 'method_view'),
+        )
+
+        self.urlconf = URLConf(patterns('',
+            url(r'^', include(patterns_one)),
+            url(r'^', include(patterns_two)),
+        ))
+
+    def test(self):
+        response = request_with_method('GET', '/test', self.urlconf)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, 'GET')
+        response = request_with_method('POST', '/test', self.urlconf)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, 'POST')
 
 if __name__ == '__main__':
     unittest.main()

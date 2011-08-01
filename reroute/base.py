@@ -75,11 +75,14 @@ class RerouteRegexURLPattern(RegexURLPattern):
                 return callback, args, kwargs
 
 def reroute_patterns(wrappers, prefix, *args):
+    return reroute_patterns_group(object(), wrappers, prefix, *args)
+
+def reroute_patterns_group(group, wrappers, prefix, *args):
     # TODO(dnerdy) Require that all patterns be instances of RerouteRegexURLPattern
     # TODO(dnerdy) Remove additional patterns with identical regexes, if present (occurs
     #   when using verb_url)
     
-    patterns_id = object()
+    patterns_id = group
     pattern_list = django_patterns(prefix, *args)
     
     for pattern in pattern_list:
