@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-__version__ = '1.1.1'  # Remember to change in setup.py as well!
+__version__ = '1.2.0alpha1'  # Remember to change in setup.py as well!
 __author__ = 'Mark Sandstrom <mark@deliciouslynerdy.com>'
 
 from django.conf.urls.defaults import handler404, handler500, include
