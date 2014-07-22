@@ -20,7 +20,7 @@
 
 from functools import partial
 
-from django.conf.urls.defaults import patterns as django_patterns
+from django.conf.urls import patterns as django_patterns
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import RegexURLPattern, RegexURLResolver
 
